@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Displays DNS information for domain subdomains
+
+display_info() {
+    local subdomain="$1"
+    local domain="$2"
+    local full_domain="${subdomain}.${domain}"
+    
+    # Get DNS information using dig and awk
+    local result
+    result=$(dig "$full_domain" | awk '/ANSWER SECTION:/{getline; print $4 " " $5}')
+    
+    if [ -n "$result" ]; then
+        local record_type
+        local destination
+        record_type=$(echo "$result" | awk '{print $1}')
+        destination=$(echo "$result" | awk '{print $2}')
+        echo "The subdomain ${subdomain} is a ${record_type} record and points to ${destination}"
+    fi
+}
+
+# Main script
+domain="$1"
+subdomain="$2"
+
+if [ -z "$domain" ]; then
+    echo "Usage: $0 domain [subdomain]"
+    exit 1
+fi
+
+if [ -z "$subdomain" ]; then
+    for s in www lb-01 web-01 web-02; do
+        display_info "$s" "$domain"
+    done
+else
+    display_info "$subdomain" "$domain"
+fi
