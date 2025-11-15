@@ -1,0 +1,25 @@
+global
+    daemon
+    maxconn 256
+
+defaults
+    mode http
+    timeout connect 5000ms
+    timeout client 50000ms
+    timeout server 50000ms
+
+frontend http-in
+    bind *:80
+    bind *:443 ssl crt /etc/ssl/certs/ndahiro.crt
+    redirect scheme https if !{ ssl_fc }
+    
+    # Define ACL for host
+    acl host_www hdr(host) -i www.ndahiro.tech
+    
+    # Route to backend based on host
+    use_backend web_servers if host_www
+
+backend web_servers
+    balance roundrobin
+    server web-01 3.89.121.247:80 check
+    server web-02 34.227.27.109:80 check
